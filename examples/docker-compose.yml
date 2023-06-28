@@ -6,13 +6,33 @@ services:
     container_name: postal-app
     ports:
       - 25:2525
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.frontend.rule=Host:postal.example.com
+    #   - traefik.port=5000
+    #   - traefik.protocol=http
+    #   - traefik.docker.network=proxy
+    #   - traefik.backend=postal-app
     labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=Host:postal.example.com
-      - traefik.port=5000
-      - traefik.protocol=http
-      - traefik.docker.network=proxy
-      - traefik.backend=postal-app
+      traefik.enable: true
+      traefik.http.middlewares.postal-web-redirect.redirectscheme.scheme: https
+      traefik.http.services.postal.loadbalancer.server.port: 80
+      traefik.http.routers.postal-insecure.rule: Host(`${APP_DOMAIN}`)
+      traefik.http.routers.postal-insecure.entrypoints: web
+      traefik.http.routers.postal-insecure.service: postal
+      traefik.http.routers.postal-insecure.middlewares: postal-web-redirect
+      traefik.http.routers.postal.rule: Host(`${APP_DOMAIN}`)
+      traefik.http.routers.postal.entrypoints: websecure
+      traefik.http.routers.postal.service: postal
+      traefik.http.routers.postal.tls.certresolver: myresolver
+      traefik.http.routers.postal-local-insecure.rule: Host(`postal.${LOCAL_DOMAIN}`)
+      traefik.http.routers.postal-local-insecure.entrypoints: web
+      traefik.http.routers.postal-local-insecure.service: postal
+      traefik.http.routers.postal-local-insecure.middlewares: postal-web-redirect
+      traefik.http.routers.postal-local.rule: Host(`postal.${LOCAL_DOMAIN}`)
+      traefik.http.routers.postal-local.entrypoints: websecure
+      traefik.http.routers.postal-local.service: postal
+      traefik.http.routers.postal-local.tls: true
     volumes:
       - ./logs/postal:/logs
     environment:
@@ -66,8 +86,7 @@ services:
       - WEB_PROTOCOL=https
 
     networks:
-      - proxy
-      - services
+      - tipi_main_network
     restart: always
 
   postal-db:
@@ -82,7 +101,7 @@ services:
       - DB_PASS=postalpass
       - CONTAINER_NAME=postal-db
     networks:
-      - services
+      - tipi_main_network
     restart: always
 
   postal-db-backup:
@@ -105,7 +124,7 @@ services:
       - COMPRESSION=ZSTD
       - MD5=TRUE
     networks:
-      - services
+      - tipi_main_network
     restart: always
 
   postal-rabbitmq:
@@ -117,7 +136,7 @@ services:
       - RABBITMQ_DEFAULT_VHOST=/postal
       - CONTAINER_NAME=postal-rabbitmq
     networks:
-      - services
+      - tipi_main_network
     restart: always
 
   postal-clamav:
@@ -129,7 +148,7 @@ services:
     environment:
       - CONTAINER_NAME=postal-clamav
     networks:
-      - services
+      - tipi_main_network
     restart: always
 
   postal-spamassassin:
@@ -142,11 +161,8 @@ services:
     environment:
       - CONTAINER_NAME=postal-spamassassin
     networks:
-      - services
+      - tipi_main_network
     restart: always
 
 networks:
-  proxy:
-    external: true
-  services:
-    external: true
+  - tipi_main_network
