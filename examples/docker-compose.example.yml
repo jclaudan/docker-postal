@@ -1,12 +1,37 @@
+version: '3.7'
+services:
+  postal-app:
+    image: tiredofit/postal:latest
+    container_name: postal-app
     ports:
       - 25:2525
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.frontend.rule=Host:postal.example.com
+    #   - traefik.port=5000
+    #   - traefik.protocol=http
+    #   - traefik.docker.network=proxy
+    #   - traefik.backend=postal-app
     labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=Host:postal.example.com
-      - traefik.port=5000
-      - traefik.protocol=http
-      - traefik.docker.network=proxy
-      - traefik.backend=postal-app
+      traefik.enable: true
+      traefik.http.middlewares.postal-web-redirect.redirectscheme.scheme: https
+      traefik.http.services.postal.loadbalancer.server.port: 80
+      traefik.http.routers.postal-insecure.rule: Host(`${APP_DOMAIN}`)
+      traefik.http.routers.postal-insecure.entrypoints: web
+      traefik.http.routers.postal-insecure.service: postal
+      traefik.http.routers.postal-insecure.middlewares: postal-web-redirect
+      traefik.http.routers.postal.rule: Host(`${APP_DOMAIN}`)
+      traefik.http.routers.postal.entrypoints: websecure
+      traefik.http.routers.postal.service: postal
+      traefik.http.routers.postal.tls.certresolver: myresolver
+      traefik.http.routers.postal-local-insecure.rule: Host(`postal.${LOCAL_DOMAIN}`)
+      traefik.http.routers.postal-local-insecure.entrypoints: web
+      traefik.http.routers.postal-local-insecure.service: postal
+      traefik.http.routers.postal-local-insecure.middlewares: postal-web-redirect
+      traefik.http.routers.postal-local.rule: Host(`postal.${LOCAL_DOMAIN}`)
+      traefik.http.routers.postal-local.entrypoints: websecure
+      traefik.http.routers.postal-local.service: postal
+      traefik.http.routers.postal-local.tls: true
     volumes:
       - ./logs/postal:/logs
     environment:
@@ -60,13 +85,12 @@
       - WEB_PROTOCOL=https
 
     networks:
-      - proxy
-      - services
+      - tipi_main_network
     restart: always
 
   postal-db:
-Expand All
-	@@ -76,13 +76,13 @@ services:
+    image: tiredofit/mariadb:latest
+    container_name: postal-db
     volumes:
       - ./db:/var/lib/mysql
     environment:
@@ -76,12 +100,15 @@ Expand All
       - DB_PASS=postalpass
       - CONTAINER_NAME=postal-db
     networks:
-      - services
-    restart: always
+      - tipi_main_network
 
+    restart: always
   postal-db-backup:
-Expand All
-	@@ -94,30 +94,30 @@ services:
+    image: tiredofit/db-backup:latest
+    container_name: postal-db-backup
+    links:
+      - postal-db
+    volumes:
       - ./dbbackup:/backup
     environment:
       - CONTAINER_NAME=postal-db-backup
@@ -96,7 +123,7 @@ Expand All
       - COMPRESSION=ZSTD
       - MD5=TRUE
     networks:
-      - services
+      - tipi_main_network
     restart: always
 
   postal-rabbitmq:
@@ -108,29 +135,33 @@ Expand All
       - RABBITMQ_DEFAULT_VHOST=/postal
       - CONTAINER_NAME=postal-rabbitmq
     networks:
-      - services
-    restart: always
+      - tipi_main_network
 
+    
+  
+    restart: always
   postal-clamav:
-Expand All
-	@@ -129,7 +129,7 @@ services:
+    container_name: postal-clamav
+    image: tiredofit/clamav
+    volumes:
+      - ./data/clamav:/data
+      - ./logs/clamav:/var/log/clamav
     environment:
       - CONTAINER_NAME=postal-clamav
     networks:
-      - services
+      - tipi_main_network
     restart: always
-
   postal-spamassassin:
-Expand All
-	@@ -142,11 +142,8 @@ services:
+    image: tiredofit/spamassassin
+    container_name: postal-spamassassin-app
+    volumes:
+      - ./logs/spamassassin:/var/log/spamassassin
+      - ./data/spamassassin/conf:/etc/mail/spamassassin
+      - ./data/spamassassin/data:/var/lib/spamassassin
     environment:
       - CONTAINER_NAME=postal-spamassassin
     networks:
-      - services
+      - tipi_main_network
     restart: always
-
 networks:
-  proxy:
-    external: true
-  services:
-    external: true
+  - tipi_main_network
