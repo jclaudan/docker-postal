@@ -6,13 +6,6 @@ services:
     container_name: postal-app
     ports:
       - 25:2525
-    # labels:
-    #   - traefik.enable=true
-    #   - traefik.frontend.rule=Host:postal.example.com
-    #   - traefik.port=5000
-    #   - traefik.protocol=http
-    #   - traefik.docker.network=proxy
-    #   - traefik.backend=postal-app
     labels:
       traefik.enable: true
       traefik.http.middlewares.postal-web-redirect.redirectscheme.scheme: https
@@ -37,54 +30,42 @@ services:
       - ./logs/postal:/logs
     environment:
       - CONTAINER_NAME=postal-app
-
-      - DB_HOST=postal-db
-      - DB_PORT=3306
-      - DB_NAME=postal
-      - DB_USER=postal
-      - DB_PASS=postalpass
-
-    ## A great idea is to delete this block after first install.
-      - DB_ROOT_PASS=rootpassword
-      - ADMIN_EMAIL=example@hostname.com
-      - ADMIN_PASS=password
-      - ADMIN_FNAME=Example
-      - ADMIN_LNAME=Admin
-    ##
-
-      - RABBITMQ_HOST=postal-rabbitmq
-      - RABBITMQ_USER=postal
-      - RABBITMQ_PASS=password
-      - RABBITMQ_VHOST=/postal
-
-      - ENABLE_SPAMASSASSIN=false
-      - SPAMASSASSIN_HOST=postal-spamassassin
-
-      - ENABLE_RSPAMD=false
-      - RSPAMD_HOST=postal-rspamd
-
-      - ENABLE_CLAMAV=false
-      - CLAMAV_HOST=postal-clamav
-
-      - DNS_HOSTNAME=postal.example.com
-      - DNS_MX=mx.example.com
-      - DNS_RETURN_PATH=rp.example.com
-      - DNS_ROUTE_DOMAIN=routes.postal.example.com
-      - DNS_TRACK_DOMAIN=track.postal.example.com
-      - DNS_SPF=spf.postal.example.com
-      - DNS_DKIM_IDENTIFIER=postal
-      - DNS_DOMAIN_VERIFY_PREFIX=example-verification
-      - SMTP_SERVER_ENABLE_TLS=false
-
-      - SMTP_FROM_ADDRESS=noreply@example.com
-      - SMTP_FROM_NAME=Postal
-      - SMTP_HOST=127.0.0.1
-      - SMTP_USER=   ## Fill these in after you have a working installation and server to be able to invite users
-      - SMTP_PASS=   ##
-
-      - WEB_HOST=mx.example.com
-      - WEB_PROTOCOL=https
-
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_ROOT_PASS=${DB_ROOT_PASS}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASS=${ADMIN_PASS}
+      - ADMIN_FNAME=${ADMIN_FNAME}
+      - ADMIN_LNAME=${ADMIN_LNAME}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST}
+      - ENABLE_SPAMASSASSIN=${ENABLE_SPAMASSASSIN}
+      - SPAMASSASSIN_HOST=${SPAMASSASSIN_HOST}
+      - ENABLE_RSPAMD=${ENABLE_RSPAMD}
+      - RSPAMD_HOST=${RSPAMD_HOST}
+      - ENABLE_CLAMAV=${ENABLE_CLAMAV}
+      - CLAMAV_HOST=${CLAMAV_HOST}
+      - DNS_HOSTNAME=${DNS_HOSTNAME}
+      - DNS_MX=${DNS_MX}
+      - DNS_RETURN_PATH=${DNS_RETURN_PATH}
+      - DNS_ROUTE_DOMAIN=${DNS_ROUTE_DOMAIN}
+      - DNS_TRACK_DOMAIN=${DNS_TRACK_DOMAIN}
+      - DNS_SPF=${DNS_SPF}
+      - DNS_DKIM_IDENTIFIER=${DNS_DKIM_IDENTIFIER}
+      - DNS_DOMAIN_VERIFY_PREFIX=${DNS_DOMAIN_VERIFY_PREFIX}
+      - SMTP_SERVER_ENABLE_TLS=${SMTP_SERVER_ENABLE_TLS}
+      - SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS}
+      - SMTP_FROM_NAME=${SMTP_FROM_NAME}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - WEB_HOST=${WEB_HOST}
+      - WEB_PROTOCOL=${WEB_PROTOCOL}
     networks:
       - tipi_main_network
     restart: always
@@ -95,10 +76,10 @@ services:
     volumes:
       - ./db:/var/lib/mysql
     environment:
-      - ROOT_PASS=rootpassword
-      - DB_NAME=postal
-      - DB_USER=postal
-      - DB_PASS=postalpass
+      - ROOT_PASS=${ROOT_PASS}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
       - CONTAINER_NAME=postal-db
     networks:
       - tipi_main_network
@@ -113,16 +94,16 @@ services:
       - ./dbbackup:/backup
     environment:
       - CONTAINER_NAME=postal-db-backup
-      - DB_HOST=postal-db
+      - DB_HOST=${DB_HOST}
       - DB_TYPE=mariadb
-      - DB_NAME=postal
-      - DB_USER=postal
-      - DB_PASS=postalpass
-      - DB_DUMP_FREQ=1440
-      - DB_DUMP_BEGIN=0000
-      - DB_CLEANUP_TIME=8640
-      - COMPRESSION=ZSTD
-      - MD5=TRUE
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_DUMP_FREQ=${DB_DUMP_FREQ}
+      - DB_DUMP_BEGIN=${DB_DUMP_BEGIN}
+      - DB_CLEANUP_TIME=${DB_CLEANUP_TIME}
+      - COMPRESSION=${COMPRESSION}
+      - MD5=${MD5}
     networks:
       - tipi_main_network
     restart: always
@@ -131,9 +112,9 @@ services:
     container_name: postal-rabbitmq
     image: tiredofit/rabbitmq
     environment:
-      - RABBITMQ_DEFAULT_USER=postal
-      - RABBITMQ_DEFAULT_PASS=password
-      - RABBITMQ_DEFAULT_VHOST=/postal
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
       - CONTAINER_NAME=postal-rabbitmq
     networks:
       - tipi_main_network
